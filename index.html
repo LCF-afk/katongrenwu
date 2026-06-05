@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>动漫卡通小精灵 - 可拖拽活动看板娘</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none; /* 避免拖拽时选中文本 */
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(145deg, #f9f3e6 0%, #ffe6d5 100%);
+            font-family: 'Segoe UI', 'Comic Neue', 'Chalkboard SE', 'Poppins', system-ui, -apple-system, sans-serif;
+            overflow-x: hidden;
+            cursor: default;
+        }
+
+        /* 页面装饰内容，展示角色可以在各个区域活动 */
+        .content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 2rem 6rem 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            color: #ff8c5a;
+            text-shadow: 3px 3px 0 #ffd9b5;
+            margin-bottom: 1rem;
+            letter-spacing: -0.5px;
+        }
+
+        .sub {
+            font-size: 1.2rem;
+            color: #b96f3c;
+            background: rgba(255, 245, 235, 0.7);
+            display: inline-block;
+            padding: 0.5rem 1.2rem;
+            border-radius: 40px;
+            backdrop-filter: blur(4px);
+            margin-bottom: 2rem;
+            border: 1px solid #ffcfaa;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.8rem;
+            margin: 2.5rem 0;
+        }
+
+        .card {
+            background: rgba(255, 248, 240, 0.85);
+            backdrop-filter: blur(8px);
+            border-radius: 2rem;
+            padding: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            transition: all 0.2s ease;
+            border: 1px solid #fff6e8;
+            color: #5a3e2b;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            background: #fffaf5;
+            box-shadow: 0 20px 30px rgba(0,0,0,0.1);
+        }
+
+        .card h3 {
+            font-size: 1.6rem;
+            margin-bottom: 0.5rem;
+            color: #e28542;
+        }
+
+        .card p {
+            line-height: 1.4;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 4rem;
+            padding: 1rem;
+            color: #b67b48;
+            border-top: 2px dashed #ffcd9e;
+            font-size: 0.9rem;
+        }
+
+        /* 提示小标签 */
+        .tip-badge {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(8px);
+            color: #fff1e0;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            z-index: 999;
+            pointer-events: none;
+            font-family: monospace;
+            letter-spacing: 1px;
+            border: 1px solid rgba(255,215,170,0.5);
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 600px) {
+            .content { padding: 1rem 1rem 4rem 1rem; }
+            h1 { font-size: 2rem; }
+            .tip-badge { font-size: 0.7rem; bottom: 12px; left: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="content">
+    <h1>✨ 会动的动漫小精灵 ✨</h1>
+    <div class="sub">🧸 拖拽我！ 让我在你的页面上到处玩耍吧 🧸</div>
+    <div class="card-grid">
+        <div class="card">
+            <h3>🎀 活泼侍者</h3>
+            <p>我是可拖拽的动漫看板娘！点击并拖拽我，就能把我放在页面的任何角落~ 我会用大眼睛看着你的鼠标方向哦！</p>
+        </div>
+        <div class="card">
+            <h3>🍭 随处活动</h3>
+            <p>即使滚动页面，我也一直悬浮在屏幕上，跟随你的浏览。把我拖到文章上、图片上或卡片边，到处都能卖萌！</p>
+        </div>
+        <div class="card">
+            <h3>🌟 动态交互</h3>
+            <p>我会自动眨眼、猫咪耳朵微微摆动，眼睛会追着你的鼠标跑～ 点击我的时候还会冒出可爱的气泡！</p>
+        </div>
+    </div>
+    <p style="background: #ffebdb; padding: 1rem; border-radius: 2rem; text-align: center; color: #aa6f42;">
+        🎈 试试把我拖拽到这些卡片的上面 → 无论在哪里，我都是最活泼的动漫小伙伴！ 🎈
+    </p>
+    <footer>
+        🌸 拖拽移动 | 大眼睛跟随鼠标 | 自动眨眼&耳动 | 点击会有惊喜对话 🌸
+    </footer>
+</div>
+
+<!-- 浮动卡通人物容器 (fixed 定位，可全屏任意拖拽) -->
+<div id="character-wrapper" style="position: fixed; left: 60px; bottom: 80px; z-index: 9999; cursor: grab; filter: drop-shadow(0 8px 18px rgba(0,0,0,0.2)); transition: filter 0.2s;">
+    <canvas id="animeCanvas" width="200" height="200" style="display: block; width: 200px; height: 200px; pointer-events: auto; border-radius: 50%;"></canvas>
+    <!-- 小气泡对话浮层 -->
+    <div id="bubble" style="position: absolute; top: -45px; left: 60px; background: white; padding: 8px 16px; border-radius: 30px; font-size: 14px; font-weight: bold; color: #e28542; box-shadow: 0 4px 10px rgba(0,0,0,0.1); white-space: nowrap; opacity: 0; transition: opacity 0.2s ease; pointer-events: none; border: 1px solid #ffc285; font-family: sans-serif;">
+        💬 嗨！拖拽我呀~
+    </div>
+</div>
+
+<script>
+    (function(){
+        // ---------- DOM 元素 ----------
+        const wrapper = document.getElementById('character-wrapper');
+        const canvas = document.getElementById('animeCanvas');
+        const ctx = canvas.getContext('2d');
+        const bubble = document.getElementById('bubble');
+
+        // 画板尺寸 (固定 200x200)
+        const SIZE = 200;
+        canvas.width = SIZE;
+        canvas.height = SIZE;
+
+        // ---------- 角色动画参数 ----------
+        let blink = false;          // 眨眼标志
+        let lastBlinkTime = 0;
+        let earWiggle = 0;          // 耳朵摆动相位
+        let animationFrameId = null;
+        
+        // 鼠标坐标 (相对于canvas画布内部，用于眼睛追随)
+        let mouseCanvasX = SIZE/2;
+        let mouseCanvasY = SIZE/2;
+        // 全局鼠标位置 (用于跟随)
+        let globalMouseX = window.innerWidth/2;
+        let globalMouseY = window.innerHeight/2;
+        
+        // 拖拽相关变量
+        let isDragging = false;
+        let dragStartX = 0, dragStartY = 0;
+        let wrapperLeft = 0, wrapperTop = 0;
+        
+        // 对话气泡定时器
+        let bubbleTimeout = null;
+        
+        // 随机眨眼间隔 (2~4秒)
+        function scheduleBlink() {
+            const delay = 2000 + Math.random() * 2500;
+            setTimeout(() => {
+                blink = true;
+                setTimeout(() => { blink = false; }, 150);
+                scheduleBlink();
+            }, delay);
+        }
+        scheduleBlink();
+        
+        // 辅助: 获取当前wrapper的实际left/top (因为直接使用style.left可能有px单位)
+        function getWrapperPosition() {
+            const left = parseFloat(wrapper.style.left);
+            const top = parseFloat(wrapper.style.top);
+            return { left: isNaN(left) ? 60 : left, top: isNaN(top) ? (window.innerHeight - 220) : top };
+        }
+        
+        // 边界限制 (确保人物完全在视口内)
+        function constrainBounds(left, top) {
+            const maxLeft = window.innerWidth - SIZE;
+            const maxTop = window.innerHeight - SIZE;
+            const minLeft = 0;
+            const minTop = 0;
+            return {
+                left: Math.min(maxLeft, Math.max(minLeft, left)),
+                top: Math.min(maxTop, Math.max(minTop, top))
+            };
+        }
+        
+        // 更新wrapper位置并加边界限制
+        function setWrapperPosition(left, top) {
+            const bounded = constrainBounds(left, top);
+            wrapper.style.left = bounded.left + 'px';
+            wrapper.style.top = bounded.top + 'px';
+            return bounded;
+        }
+        
+        // 显示气泡消息 (短暂出现)
+        function showBubble(message, duration = 1800) {
+            if (bubbleTimeout) clearTimeout(bubbleTimeout);
+            bubble.style.opacity = '1';
+            bubble.innerText = message;
+            bubbleTimeout = setTimeout(() => {
+                bubble.style.opacity = '0';
+            }, duration);
+        }
+        
+        // ---------- 鼠标/触摸 拖拽逻辑 (支持跨平台) ----------
+        function onDragStart(e) {
+            e.preventDefault();
+            // 获取鼠标/触摸点坐标
+            let clientX, clientY;
+            if (e.type === 'mousedown') {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            } else if (e.type === 'touchstart') {
+                if (e.touches.length) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else return;
+            } else return;
+            
+            isDragging = true;
+            const rect = wrapper.getBoundingClientRect();
+            dragStartX = clientX - rect.left;
+            dragStartY = clientY - rect.top;
+            wrapperLeft = rect.left;
+            wrapperTop = rect.top;
+            
+            // 改变光标样式
+            wrapper.style.cursor = 'grabbing';
+            // 给角色加一点活泼反馈
+            showBubble('✨ 拖拽中 ✨', 600);
+            
+            // 全局事件监听
+            window.addEventListener('mousemove', onDragMove);
+            window.addEventListener('mouseup', onDragEnd);
+            window.addEventListener('touchmove', onDragMove, { passive: false });
+            window.addEventListener('touchend', onDragEnd);
+        }
+        
+        function onDragMove(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            let clientX, clientY;
+            if (e.type === 'mousemove') {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            } else if (e.type === 'touchmove') {
+                if (e.touches.length) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else return;
+            } else return;
+            
+            let newLeft = clientX - dragStartX;
+            let newTop = clientY - dragStartY;
+            const bounded = constrainBounds(newLeft, newTop);
+            wrapper.style.left = bounded.left + 'px';
+            wrapper.style.top = bounded.top + 'px';
+        }
+        
+        function onDragEnd(e) {
+            if (!isDragging) return;
+            isDragging = false;
+            wrapper.style.cursor = 'grab';
+            // 移除全局事件
+            window.removeEventListener('mousemove', onDragMove);
+            window.removeEventListener('mouseup', onDragEnd);
+            window.removeEventListener('touchmove', onDragMove);
+            window.removeEventListener('touchend', onDragEnd);
+            // 拖拽结束后冒一句俏皮话
+            showBubble('🎉 我在这里啦！ 🎉', 1200);
+        }
+        
+        // 为角色添加点击时的小彩蛋 (单击角色随机萌语)
+        function onCharacterClick(e) {
+            e.stopPropagation();
+            const messages = [
+                '🌸 摸摸头~', '🍬 要和人家玩吗?', '⭐ 最喜欢你了!', 
+                '🎈 拖拽我去任何地方哟', '🐱 喵喵喵~', '🍰 想吃蛋糕!',
+                '✨ 今天也是元气满满!', '💖 你会一直带着我吗?'
+            ];
+            const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+            showBubble(`💬 ${randomMsg}`, 1500);
+            // 小幅度弹跳效果增加生动性
+            wrapper.style.transform = 'scale(1.02)';
+            setTimeout(() => { wrapper.style.transform = ''; }, 150);
+        }
+        
+        // ---------- 更新全局鼠标位置 & 转换到canvas相对坐标 (用于眼睛追随) ----------
+        function updateMousePosition(e) {
+            // 更新全局鼠标坐标
+            if (e.clientX !== undefined) {
+                globalMouseX = e.clientX;
+                globalMouseY = e.clientY;
+            }
+            // 计算相对于canvas画布中心的偏移
+            const wrapperRect = wrapper.getBoundingClientRect();
+            const canvasRect = canvas.getBoundingClientRect();
+            // 如果鼠标在canvas区域内则精准跟随，否则使用全局鼠标但相对画板
+            let relativeX = globalMouseX - canvasRect.left;
+            let relativeY = globalMouseY - canvasRect.top;
+            // 边界裁剪 [0, SIZE]
+            relativeX = Math.min(SIZE, Math.max(0, relativeX));
+            relativeY = Math.min(SIZE, Math.max(0, relativeY));
+            mouseCanvasX = relativeX;
+            mouseCanvasY = relativeY;
+        }
+        
+        // 全局鼠标移动监听
+        window.addEventListener('mousemove', updateMousePosition);
+        window.addEventListener('touchmove', (e) => {
+            if (e.touches.length) {
+                updateMousePosition(e.touches[0]);
+            }
+        });
+        window.addEventListener('touchstart', (e) => {
+            if (e.touches.length) updateMousePosition(e.touches[0]);
+        });
+        
+        // 如果没有鼠标移动，让眼睛看向默认稍微偏下的方向(可爱)
+        setInterval(() => {
+            if (!isDragging && (Math.abs(globalMouseX - window.innerWidth/2) < 30)) {
+                // idle 轻微动动眼睛中心就OK
+            }
+        }, 100);
+        
+        // 让耳朵摆动 (随时间正弦变化)
+        let timeEar = 0;
+        
+        // ---------- 绘制超可爱的动漫卡通人物 (核心画功) ----------
+        function drawCharacter() {
+            if (!ctx) return;
+            ctx.clearRect(0, 0, SIZE, SIZE);
+            
+            // 动态耳朵摆动效果 (猫咪耳/狐狸耳风格)
+            timeEar += 0.03;
+            const earAngle = Math.sin(timeEar) * 0.08; // -0.08 到 0.08 弧度摆动
+            // 左耳摆动偏移量 和 右耳摆动 (模拟晃动)
+            const leftEarShiftX = Math.sin(timeEar) * 2;
+            const rightEarShiftX = Math.cos(timeEar+0.5) * 2;
+            
+            // ----- 绘制头部大圆 (暖色调软萌) -----
+            ctx.save();
+            // 头部阴影增加立体感
+            ctx.shadowColor = "rgba(0,0,0,0.1)";
+            ctx.shadowBlur = 6;
+            ctx.beginPath();
+            ctx.arc(SIZE/2, SIZE/2 + 4, 78, 0, Math.PI*2);
+            ctx.fillStyle = "#FFE5B4";
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.beginPath();
+            ctx.arc(SIZE/2, SIZE/2 + 2, 76, 0, Math.PI*2);
+            ctx.fillStyle = "#FFE0A3";
+            ctx.fill();
+            // 腮红
+            ctx.beginPath();
+            ctx.ellipse(SIZE/2 - 45, SIZE/2 + 22, 12, 8, 0, 0, Math.PI*2);
+            ctx.fillStyle = "#FFB7B2";
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(SIZE/2 + 45, SIZE/2 + 22, 12, 8, 0, 0, Math.PI*2);
+            ctx.fill();
+            
+            // 猫耳朵 (左耳 带摆动)
+            ctx.save();
+            ctx.translate(SIZE/2 - 52 + leftEarShiftX, SIZE/2 - 58);
+            ctx.rotate(earAngle * 0.8);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-28, -48);
+            ctx.lineTo(28, -38);
+            ctx.fillStyle = "#F7CF8C";
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(-6, -6);
+            ctx.lineTo(-22, -40);
+            ctx.lineTo(12, -34);
+            ctx.fillStyle = "#F5BC6E";
+            ctx.fill();
+            ctx.restore();
+            
+            // 右耳 (带摆动)
+            ctx.save();
+            ctx.translate(SIZE/2 + 52 + rightEarShiftX, SIZE/2 - 58);
+            ctx.rotate(-earAngle * 0.8);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(28, -48);
+            ctx.lineTo(-28, -38);
+            ctx.fillStyle = "#F7CF8C";
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(6, -6);
+            ctx.lineTo(22, -40);
+            ctx.lineTo(-12, -34);
+            ctx.fillStyle = "#F5BC6E";
+            ctx.fill();
+            ctx.restore();
+            
+            // 头顶小花装饰 (动漫感)
+            ctx.save();
+            ctx.shadowBlur = 2;
+            ctx.beginPath();
+            ctx.arc(SIZE/2 - 10, SIZE/2 - 56, 8, 0, Math.PI*2);
+            ctx.fillStyle = "#FFB347";
+            ctx.fill();
+            for(let i=0;i<5;i++) {
+                let angle = i * (Math.PI*2/5);
+                let px = SIZE/2 - 10 + Math.cos(angle)*12;
+                let py = SIZE/2 - 56 + Math.sin(angle)*12;
+                ctx.beginPath();
+                ctx.arc(px, py, 5, 0, Math.PI*2);
+                ctx.fillStyle = "#FF8C5A";
+                ctx.fill();
+            }
+            ctx.beginPath();
+            ctx.arc(SIZE/2 - 10, SIZE/2 - 56, 5, 0, Math.PI*2);
+            ctx.fillStyle = "#FFE484";
+            ctx.fill();
+            
+            // 眼睛白色基底
+            ctx.beginPath();
+            ctx.ellipse(SIZE/2 - 30, SIZE/2 - 5, 16, 19, 0, 0, Math.PI*2);
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(SIZE/2 + 30, SIZE/2 - 5, 16, 19, 0, 0, Math.PI*2);
+            ctx.fill();
+            
+            // 眨眼效果 (如果blink为true，则画上眼皮遮盖)
+            // 计算瞳孔位置 (跟随鼠标)
+            let leftPupilX = SIZE/2 - 30;
+            let leftPupilY = SIZE/2 - 5;
+            let rightPupilX = SIZE/2 + 30;
+            let rightPupilY = SIZE/2 - 5;
+            
+            // 限制视线移动范围 (不超过眼眶)
+            let dxMouse = (mouseCanvasX - (SIZE/2)) / (SIZE/2);
+            let dyMouse = (mouseCanvasY - (SIZE/2)) / (SIZE/2);
+            let maxOffset = 9;
+            let leftOffsetX = dxMouse * maxOffset;
+            let leftOffsetY = dyMouse * maxOffset;
+            let rightOffsetX = dxMouse * maxOffset;
+            let rightOffsetY = dyMouse * maxOffset;
+            
+            // 限制偏移不要超出瞳孔范围
+            leftOffsetX = Math.min(maxOffset, Math.max(-maxOffset, leftOffsetX));
+            leftOffsetY = Math.min(maxOffset-2, Math.max(-maxOffset+2, leftOffsetY));
+            rightOffsetX = Math.min(maxOffset, Math.max(-maxOffset, rightOffsetX));
+            rightOffsetY = Math.min(maxOffset-2, Math.max(-maxOffset+2, rightOffsetY));
+            
+            let leftPupilFinalX = leftPupilX + leftOffsetX;
+            let leftPupilFinalY = leftPupilY + leftOffsetY;
+            let rightPupilFinalX = rightPupilX + rightOffsetX;
+            let rightPupilFinalY = rightPupilY + rightOffsetY;
+            
+            if(!blink){
+                // 正常眼睛绘制瞳孔和高光
+                ctx.beginPath();
+                ctx.arc(leftPupilFinalX, leftPupilFinalY, 8, 0, Math.PI*2);
+                ctx.fillStyle = "#3D2B1A";
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(rightPupilFinalX, rightPupilFinalY, 8, 0, Math.PI*2);
+                ctx.fill();
+                // 高光
+                ctx.beginPath();
+                ctx.arc(leftPupilFinalX-2, leftPupilFinalY-2, 2.5, 0, Math.PI*2);
+                ctx.fillStyle = "#FFFFFF";
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(rightPupilFinalX-2, rightPupilFinalY-2, 2.5, 0, Math.PI*2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(leftPupilFinalX+2, leftPupilFinalY+1, 1.2, 0, Math.PI*2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(rightPupilFinalX+2, rightPupilFinalY+1, 1.2, 0, Math.PI*2);
+                ctx.fill();
+            } else {
+                // 眨眼动作: 画微笑眼皮 (萌系)
+                ctx.beginPath();
+                ctx.ellipse(SIZE/2 - 30, SIZE/2 - 5, 16, 4, 0, 0, Math.PI*2);
+                ctx.fillStyle = "#F5BA7A";
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(SIZE/2 + 30, SIZE/2 - 5, 16, 4, 0, 0, Math.PI*2);
+                ctx.fill();
+                // 顺便画睫毛
+                ctx.fillStyle = "#5E3A1A";
+                for(let i=0;i<3;i++){
+                    ctx.fillRect(SIZE/2 - 38 + i*3, SIZE/2 - 8, 1.5, 5);
+                    ctx.fillRect(SIZE/2 + 30 + i*3, SIZE/2 - 8, 1.5, 5);
+                }
+            }
+            
+            // 可爱小眉毛 (根据眼神微微变化)
+            ctx.beginPath();
+            ctx.moveTo(SIZE/2 - 48, SIZE/2 - 27);
+            ctx.quadraticCurveTo(SIZE/2 - 38, SIZE/2 - 33, SIZE/2 - 28, SIZE/2 - 27);
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = "#8B5A2B";
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(SIZE/2 + 48, SIZE/2 - 27);
+            ctx.quadraticCurveTo(SIZE/2 + 38, SIZE/2 - 33, SIZE/2 + 28, SIZE/2 - 27);
+            ctx.stroke();
+            
+            // 微笑嘴巴 (动漫元气)
+            ctx.beginPath();
+            ctx.arc(SIZE/2, SIZE/2 + 18, 25, 0.05, Math.PI - 0.05);
+            ctx.strokeStyle = "#C2613B";
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            // 小舌头/红晕
+            ctx.beginPath();
+            ctx.arc(SIZE/2, SIZE/2 + 24, 4, 0, Math.PI*2);
+            ctx.fillStyle = "#FF9580";
+            ctx.fill();
+            
+            // 加几颗小雀斑增加可爱度
+            for(let i=0;i<6;i++) {
+                ctx.beginPath();
+                ctx.arc(SIZE/2 - 18 + (i%3)*12, SIZE/2 + 30 + (i%2)*6, 1.2, 0, Math.PI*2);
+                ctx.fillStyle = "#C28A58";
+                ctx.fill();
+            }
+            
+            // 蝴蝶结 (领结风) 动感微摇摆
+            ctx.save();
+            ctx.translate(SIZE/2, SIZE/2 + 48);
+            ctx.rotate(Math.sin(timeEar*1.8) * 0.07);
+            ctx.beginPath();
+            ctx.moveTo(-12, 0);
+            ctx.quadraticCurveTo(-20, 10, -8, 16);
+            ctx.quadraticCurveTo(0, 12, 0, 6);
+            ctx.fillStyle = "#F7A1C4";
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(12, 0);
+            ctx.quadraticCurveTo(20, 10, 8, 16);
+            ctx.quadraticCurveTo(0, 12, 0, 6);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(0, 6, 7, 5, 0, 0, Math.PI*2);
+            ctx.fillStyle = "#F27EAE";
+            ctx.fill();
+            ctx.restore();
+            
+            // 小手手/装饰小爪印? 在身体两侧晃悠 (增加活动感)
+            ctx.fillStyle = "#FCD49C";
+            ctx.beginPath();
+            ctx.ellipse(SIZE/2 - 45, SIZE/2 + 50, 12, 10, -0.3, 0, Math.PI*2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(SIZE/2 + 45, SIZE/2 + 50, 12, 10, 0.3, 0, Math.PI*2);
+            ctx.fill();
+            // 肉垫小点点
+            ctx.fillStyle = "#F0A77A";
+            ctx.beginPath();
+            ctx.arc(SIZE/2 - 48, SIZE/2 + 47, 3, 0, Math.PI*2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(SIZE/2 + 48, SIZE/2 + 47, 3, 0, Math.PI*2);
+            ctx.fill();
+            ctx.restore();
+        }
+        
+        // 动画循环 (实时更新画板和耳朵摆动)
+        function animate() {
+            drawCharacter();
+            animationFrameId = requestAnimationFrame(animate);
+        }
+        
+        // 监听窗口大小改变时，重新约束角色位置 (避免超出边界)
+        function onWindowResize() {
+            const { left, top } = getWrapperPosition();
+            setWrapperPosition(left, top);
+        }
+        
+        // 初始化拖拽事件绑定
+        function initDragEvents() {
+            wrapper.addEventListener('mousedown', onDragStart);
+            wrapper.addEventListener('touchstart', onDragStart, { passive: false });
+            wrapper.style.cursor = 'grab';
+            // 点击角色弹出对话框
+            canvas.addEventListener('click', onCharacterClick);
+        }
+        
+        // 设置初始位置 (右下角偏左侧一点)
+        function initPosition() {
+            const initLeft = window.innerWidth - 240;
+            const initTop = window.innerHeight - 260;
+            setWrapperPosition(initLeft > 50 ? initLeft : 50, initTop > 50 ? initTop : 50);
+        }
+        
+        // 处理全局鼠标默认初始化时候的跟随目标
+        function defaultMousePos() {
+            mouseCanvasX = SIZE/2;
+            mouseCanvasY = SIZE/2;
+        }
+        
+        // 启动所有
+        function main() {
+            initPosition();
+            initDragEvents();
+            animate();
+            window.addEventListener('resize', onWindowResize);
+            defaultMousePos();
+            // 延迟显示欢迎气泡
+            setTimeout(() => {
+                showBubble('🎀 来拖拽我叭~ 🎀', 2500);
+            }, 500);
+        }
+        
+        main();
+    })();
+</script>
+</body>
+</html>
